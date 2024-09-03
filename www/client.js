@@ -3,18 +3,21 @@ const grid = document.querySelector("#grid");
 const form = document.querySelector("#form");
 form.addEventListener("change", send);
 
-function send(event) {
+async function send(event) {
   const { name } = event.target;
-  fetch("http://localhost:6060/set", {
-    method: "POST",
-    body: { cell: name },
-  })
-    .then((res) => {
-      console.log(res);
-    })
-    .catch((err) => {
-      console.error(err);
+  try {
+    const res = await fetch("http://localhost:6060/set", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: `cell=${name}`,
     });
+    const data = await res.text();
+    console.log(data);
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 function createGrid() {
