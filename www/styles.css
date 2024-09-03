@@ -1,0 +1,40 @@
+:root {
+  --grid-x: 25;
+  --grid-y: 25;
+  --input-size: 15px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-size: 16px;
+  background-color: #0d151b;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#grid {
+  margin: 0 auto;
+  padding: 1rem;
+
+  border: 1px solid #86624d;
+
+  display: grid;
+  grid-template-columns: repeat(var(--grid-x), var(--input-size));
+  grid-template-rows: repeat(var(--grid-y), var(--input-size));
+  grid-column-gap: 0px;
+  grid-row-gap: 0px;
+}
+
+input {
+  accent-color: #266b85;
+  border: 1px solid #000;
+  width: var(--input-size);
+  height: var(--input-size);
+}

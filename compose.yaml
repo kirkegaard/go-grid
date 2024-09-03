@@ -1,0 +1,21 @@
+services:
+  redis:
+    image: redis:latest 
+    container_name: redis
+    ports:
+      - "6379:6379"  
+    volumes:
+      - redis_data:/data  
+    restart: always  
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "8080:80"  
+    volumes:
+      - ./www:/usr/share/nginx/html  
+    restart: always  
+
+volumes:
+  redis_data:
