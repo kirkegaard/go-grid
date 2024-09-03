@@ -47,7 +47,10 @@ func Run() {
 
 	// Start the server
 	fmt.Println("Server running on port 6060")
-	http.ListenAndServe(":6060", handler)
+	err = http.ListenAndServe(":6060", handler)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func corsMiddleware(next http.Handler) http.Handler {
@@ -59,7 +62,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 // Fetch grid handler
 func getGridHandler(w http.ResponseWriter, r *http.Request) {
-	// // Create a byte slice to hold the bits as bytes
+	// Create a byte slice to hold the bits as bytes
 	bits := make([]byte, (gridSize+7)/8)
 
 	for i := 0; i < gridSize; i++ {
