@@ -32,6 +32,5 @@ services:
     depends_on:
       - api
 
-
 volumes:
   redis_data:
