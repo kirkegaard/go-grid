@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 )
@@ -25,10 +26,23 @@ const gridKey = "grid_bits"
 // 25x25 grid
 const gridSize = 625
 
+func getEnv(key, defaultValue string) string {
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		value = defaultValue
+	}
+	return value
+}
+
 func Run() {
+	// Get Redis connection details from environment variables
+	redisHost := getEnv("REDIS_HOST", "localhost")
+	redisPort := getEnv("REDIS_PORT", "6379")
+
 	// Initialize Redis client
+	redisAddr := fmt.Sprintf("%s:%s", redisHost, redisPort)
 	rdb = redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: redisAddr,
 	})
 
 	_, err := rdb.Ping(ctx).Result()
@@ -46,8 +60,9 @@ func Run() {
 	handler := corsMiddleware(mux)
 
 	// Start the server
-	fmt.Println("Server running on port 6060")
-	err = http.ListenAndServe(":6060", handler)
+	port := getEnv("GRID_PORT", "6060")
+	fmt.Printf("Server running on port %s", port)
+	err = http.ListenAndServe(fmt.Sprintf(":%s", port), handler)
 	if err != nil {
 		panic(err)
 	}

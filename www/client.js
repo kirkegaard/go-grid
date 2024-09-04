@@ -5,6 +5,8 @@
 //   console.log(data);
 // };
 
+const API = "";
+
 const grid = document.querySelector("#grid");
 
 const form = document.querySelector("#form");
@@ -13,7 +15,7 @@ form.addEventListener("change", send);
 async function send(event) {
   const { name } = event.target;
   try {
-    const res = await fetch("http://localhost:6060/set", {
+    const res = await fetch(`${API}/api/set`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -29,7 +31,7 @@ async function send(event) {
 
 async function get() {
   try {
-    const res = await fetch("http://localhost:6060/get");
+    const res = await fetch(`${API}/api/get`);
     const data = await res.text();
     return reverseXOR(hexToBytes(data));
   } catch (err) {
