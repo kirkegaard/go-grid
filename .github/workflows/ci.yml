@@ -3,10 +3,9 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - ci 
-  # pull_request:
-  #   branches:
-  #     - main  # Change this to your branch if necessary
+      - main
+    tags:
+      - 'v*'  # Match version tags like v1.0.0
 
 jobs:
   build:
@@ -32,5 +31,10 @@ jobs:
         context: .
         file: Dockerfile
         push: true
-        tags: ghcr.io/${{ github.repository }}/go-grid:latest
+        tags: |
+          ghcr.io/${{ github.repository }}/go-grid:${{ github.ref_name }}
+          ghcr.io/${{ github.repository }}/go-grid:latest
 
+    - name: Clean up old tags
+      run: |
+        docker image prune -f --filter "until=24h"
