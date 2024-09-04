@@ -1,7 +1,7 @@
 :root {
   --grid-x: 25;
   --grid-y: 25;
-  --input-size: 15px;
+  --input-size: 25px;
 }
 
 * {

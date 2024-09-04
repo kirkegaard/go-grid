@@ -62,7 +62,9 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 // Fetch grid handler
 func getGridHandler(w http.ResponseWriter, r *http.Request) {
-	// Create a byte slice to hold the bits as bytes
+	// Create a byte slice to hold the bits as bytes.
+	// Each byte will hold 8 bits of the grid.
+	// The 7 in (gridSize+7)/8 is to round up the division result.
 	bits := make([]byte, (gridSize+7)/8)
 
 	for i := 0; i < gridSize; i++ {
@@ -73,6 +75,8 @@ func getGridHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if bit == 1 {
+			// Set the bit in the byte slice
+			// The bit index in the byte is the remainder of i divided by 8
 			bits[i/8] ^= 1 << (i % 8)
 		}
 	}
