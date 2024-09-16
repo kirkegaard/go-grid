@@ -1,11 +1,21 @@
-// const ws = new WebSocket("ws://localhost:6060/ws");
-//
-// ws.onmessage = (event) => {
-//   const data = JSON.parse(event.data);
-//   console.log(data);
-// };
+const API = "http://localhost:6060";
 
-const API = "";
+const ws = new WebSocket("ws://localhost:6060/ws");
+
+ws.onopen = () => {
+  console.log("Connected to the server");
+};
+
+ws.onmessage = (event) => {
+  if (event.data.indexOf("set:") === 0) {
+    const [_, cell, checked] = event.data.split(":");
+    const input = document.querySelector(`input[name="${cell}"]`);
+    input.checked = checked === "1" ? true : false;
+  } else {
+    const bits = reverseXOR(hexToBytes(event.data));
+    createGrid(bits);
+  }
+};
 
 const grid = document.querySelector("#grid");
 
@@ -15,34 +25,14 @@ form.addEventListener("change", send);
 async function send(event) {
   const { name } = event.target;
   try {
-    const res = await fetch(`${API}/api/set`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: `cell=${name}`,
-    });
-    const data = await res.text();
-    console.log(data);
+    ws.send(`set:${name}`);
   } catch (err) {
     console.error(err);
   }
 }
 
-async function get() {
-  try {
-    const res = await fetch(`${API}/api/get`);
-    const data = await res.text();
-    return reverseXOR(hexToBytes(data));
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-async function createGrid() {
+function createGrid(bits) {
   const fragment = document.createDocumentFragment();
-
-  const bits = await get();
 
   for (let i = 0; i < 25 * 25; i++) {
     const input = document.createElement("input");
@@ -83,6 +73,3 @@ function reverseXOR(bytes) {
 
   return bits;
 }
-
-setInterval(createGrid, 2500);
-createGrid();
