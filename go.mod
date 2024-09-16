@@ -2,7 +2,10 @@ module github.com/kirkegaard/go-grid
 
 go 1.22.6
 
-require github.com/go-redis/redis/v8 v8.11.5
+require (
+	github.com/go-redis/redis/v8 v8.11.5
+	github.com/gorilla/websocket v1.5.3
+)
 
 require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
