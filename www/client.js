@@ -1,6 +1,4 @@
-const API = "http://localhost:6060";
-
-const ws = new WebSocket("ws://localhost:6060/ws");
+const ws = new WebSocket(`/ws`);
 
 ws.onopen = () => {
   console.log("Connected to the server");
@@ -12,26 +10,24 @@ ws.onmessage = (event) => {
     const input = document.querySelector(`input[name="${cell}"]`);
     input.checked = checked === "1" ? true : false;
   } else {
+    // Setup grid
     const bits = reverseXOR(hexToBytes(event.data));
-    createGrid(bits);
+    setupGrid(bits);
   }
 };
 
-const grid = document.querySelector("#grid");
-
 const form = document.querySelector("#form");
-form.addEventListener("change", send);
-
-async function send(event) {
+form.addEventListener("change", (event) => {
   const { name } = event.target;
   try {
     ws.send(`set:${name}`);
   } catch (err) {
     console.error(err);
   }
-}
+});
 
-function createGrid(bits) {
+function setupGrid(bits) {
+  const grid = document.querySelector("#grid");
   const fragment = document.createDocumentFragment();
 
   for (let i = 0; i < 25 * 25; i++) {
