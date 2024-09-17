@@ -12,7 +12,7 @@ var mu sync.Mutex
 const gridKey = "grid_bits"
 
 // 25x25 grid
-var gridSize, err = strconv.Atoi(GetEnv("GRID_SIZE", "10000"))
+var gridSize, err = strconv.Atoi(GetEnv("GRID_SIZE", "625"))
 
 func getGridState() []byte {
 	// Create a byte slice to hold the bits as bytes.

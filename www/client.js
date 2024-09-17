@@ -17,19 +17,14 @@ ws.onmessage = (event) => {
   }
 };
 
-const form = document.querySelector("#form");
-form.addEventListener("change", (event) => {
+const grid = document.querySelector("#grid");
+
+document.querySelector("#toggle").onclick = (event) => {
   event.preventDefault();
-  const { name } = event.target;
-  try {
-    ws.send(`set:${name}`);
-  } catch (err) {
-    console.error(err);
-  }
-});
+  grid.classList.toggle("fixed");
+};
 
 function setupGrid(bits) {
-  const grid = document.querySelector("#grid");
   const fragment = document.createDocumentFragment();
 
   for (let i = 0; i < bits.length; i++) {
@@ -38,6 +33,12 @@ function setupGrid(bits) {
     input.name = i;
     input.value = 1;
     input.checked = bits[i] === 1 ? true : false;
+    input.onclick = (event) => {
+      event.preventDefault();
+      ws.send(`set:${i}`);
+      input.disabled = true;
+      setTimeout(() => (input.disabled = false), 250);
+    };
     fragment.appendChild(input);
   }
 

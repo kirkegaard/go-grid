@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const THROTTLE = 500
+const THROTTLE = 250
 
 // Upgrader to handle WebSocket requests
 var upgrader = websocket.Upgrader{

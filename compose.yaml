@@ -5,7 +5,7 @@ services:
     container_name: api
     restart: always
     environment:
-      - GRID_SIZE=1000
+      - GRID_SIZE=625
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
