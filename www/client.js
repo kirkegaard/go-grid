@@ -1,4 +1,5 @@
-const ws = new WebSocket(`/ws`);
+const API = "";
+const ws = new WebSocket(`${API}/ws`);
 
 ws.onopen = () => {
   console.log("Connected to the server");
@@ -18,6 +19,7 @@ ws.onmessage = (event) => {
 
 const form = document.querySelector("#form");
 form.addEventListener("change", (event) => {
+  event.preventDefault();
   const { name } = event.target;
   try {
     ws.send(`set:${name}`);
@@ -30,7 +32,7 @@ function setupGrid(bits) {
   const grid = document.querySelector("#grid");
   const fragment = document.createDocumentFragment();
 
-  for (let i = 0; i < 25 * 25; i++) {
+  for (let i = 0; i < bits.length; i++) {
     const input = document.createElement("input");
     input.type = "checkbox";
     input.name = i;
@@ -54,7 +56,8 @@ function hexToBytes(hex) {
 
 // Reverse the XOR operation
 function reverseXOR(bytes) {
-  const gridSize = 625;
+  const gridSize = bytes.length * 8;
+  console.log(gridSize);
   const bits = [];
 
   for (let i = 0; i < gridSize; i++) {

@@ -8,9 +8,12 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
+
+const THROTTLE = 500
 
 // Upgrader to handle WebSocket requests
 var upgrader = websocket.Upgrader{
@@ -21,8 +24,10 @@ var upgrader = websocket.Upgrader{
 
 // Client represents a WebSocket connection
 type Client struct {
-	Conn *websocket.Conn
-	Send chan []byte
+	Conn           *websocket.Conn
+	Send           chan []byte
+	LastMessage    time.Time
+	LastMessageMux sync.Mutex
 }
 
 // Hub maintains the set of active clients and broadcasts events
@@ -77,11 +82,22 @@ func (c *Client) readPump() {
 		c.Conn.Close()
 	}()
 
+	ticker := time.NewTicker(THROTTLE * time.Millisecond)
+	defer ticker.Stop()
+
 	for {
 		_, message, err := c.Conn.ReadMessage()
 		if err != nil {
 			break
 		}
+
+		c.LastMessageMux.Lock()
+		if time.Since(c.LastMessage) < THROTTLE*time.Millisecond {
+			c.LastMessageMux.Unlock()
+			continue
+		}
+		c.LastMessage = time.Now()
+		c.LastMessageMux.Unlock()
 
 		msg := string(message)
 		if strings.HasPrefix(msg, "set:") {

@@ -1,12 +1,11 @@
 services:
 
   api: 
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/kirkegaard/go-grid:latest
     container_name: api
     restart: always
     environment:
+      - GRID_SIZE=1000
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
@@ -25,7 +24,7 @@ services:
     image: nginx:latest
     container_name: nginx
     ports:
-      - "8080:80"  
+      - "9090:80"
     volumes:
       - ./www:/usr/share/nginx/html
       - ./etc/nginx.conf:/etc/nginx/nginx.conf

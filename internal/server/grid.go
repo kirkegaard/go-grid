@@ -1,6 +1,7 @@
 package server
 
 import (
+	"strconv"
 	"sync"
 )
 
@@ -11,7 +12,7 @@ var mu sync.Mutex
 const gridKey = "grid_bits"
 
 // 25x25 grid
-const gridSize = 626
+var gridSize, err = strconv.Atoi(GetEnv("GRID_SIZE", "10000"))
 
 func getGridState() []byte {
 	// Create a byte slice to hold the bits as bytes.
