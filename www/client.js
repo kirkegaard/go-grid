@@ -1,5 +1,5 @@
 const getSocket = () => {
-  const API = "ws://localhost:6060";
+  const API = ""; // "ws://localhost:6060";
   const socket = new WebSocket(`${API}/ws`);
 
   socket.onopen = () => {
