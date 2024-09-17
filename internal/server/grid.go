@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"strconv"
 	"sync"
 )
@@ -14,35 +15,65 @@ const gridKey = "grid_bits"
 // 25x25 grid
 var gridSize, err = strconv.Atoi(GetEnv("GRID_SIZE", "625"))
 
-func getGridState() []byte {
-	// Create a byte slice to hold the bits as bytes.
-	// Each byte will hold 8 bits of the grid.
-	// The 7 in (gridSize+7)/8 is to round up the division result.
-	bits := make([]byte, (gridSize+7)/8)
+func InitGrid() error {
+	gridSizeBytes := (gridSize + 7) / 8
 
-	for i := 0; i < gridSize; i++ {
-		bit, err := rdb.GetBit(ctx, gridKey, int64(i)).Result()
-		if err != nil {
-			continue
-		}
-
-		if bit == 1 {
-			// Set the bit in the byte slice
-			// The bit index in the byte is the remainder of i divided by 8
-			bits[i/8] ^= 1 << (i % 8)
-		}
+	exists, err := rdb.Exists(ctx, gridKey).Result()
+	if err != nil {
+		return err
 	}
 
-	return bits
+	// Return early if the grid already exists
+	if exists == 1 {
+		return nil
+	}
+
+	// Create a zero-filled byte array
+	emptyGrid := make([]byte, gridSizeBytes)
+
+	// Set the empty grid in Redis
+	err = rdb.Set(ctx, gridKey, emptyGrid, 0).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-// Toggle grid cell handler
+// Get the grid state
+func getGridState() ([]byte, error) {
+	gridSizeBytes := (gridSize + 7) / 8
+
+	// Get the grid state
+	gridData, err := rdb.Get(ctx, gridKey).Bytes()
+
+	if err != nil {
+		return nil, err
+	}
+
+	// If the grid data is the correct size
+	if len(gridData) > gridSizeBytes {
+		// Truncate the grid data to the expected size
+		gridData = gridData[:gridSizeBytes]
+	} else if len(gridData) < gridSizeBytes {
+		// Pad zeros to the end of the grid data
+		gridData = append(gridData, make([]byte, gridSizeBytes-len(gridData))...)
+	}
+
+	return gridData, nil
+}
+
+// Toggle grid cell
 func toggleGridCell(cell int) (int, error) {
 	// Lock the grid
 	mu.Lock()
 	defer mu.Unlock()
 
-	// GetBit returns an int64, so we need to convert it to an int
+	if cell < 0 || cell >= gridSize {
+		return -1, fmt.Errorf("cell index out of bounds")
+	}
+
+	// Get the current bit value
 	currentBit, err := rdb.GetBit(ctx, gridKey, int64(cell)).Result()
 	if err != nil {
 		return -1, err
@@ -61,5 +92,4 @@ func toggleGridCell(cell int) (int, error) {
 	}
 
 	return newBit, nil
-
 }

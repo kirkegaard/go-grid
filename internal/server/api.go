@@ -1,7 +1,7 @@
 package server
 
 import (
-	"encoding/hex"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -9,11 +9,17 @@ import (
 
 // Fetch the grid state
 func ApiGetHandler(w http.ResponseWriter, r *http.Request) {
-	bits := getGridState()
-	compressed := hex.EncodeToString(bits)
+	bits, err := getGridState()
+
+	if err != nil {
+		http.Error(w, "Failed to get grid state", http.StatusInternalServerError)
+		return
+	}
+
+	based := base64.StdEncoding.EncodeToString(bits)
 
 	w.Header().Set("Content-Type", "plain/text")
-	fmt.Fprint(w, compressed)
+	fmt.Fprint(w, based)
 }
 
 // Set a cell in the grid

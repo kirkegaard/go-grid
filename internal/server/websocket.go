@@ -1,7 +1,7 @@
 package server
 
 import (
-	"encoding/hex"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
@@ -67,9 +67,14 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	hub.Register <- client
 
 	// Send the current grid state to the client
-	bits := getGridState()
-	compressed := hex.EncodeToString(bits)
-	client.Send <- []byte(compressed)
+	bits, err := getGridState()
+	if err != nil {
+		log.Printf("Failed to get grid state: %v", err)
+		return
+	}
+
+	based := base64.StdEncoding.EncodeToString(bits)
+	client.Send <- []byte(based)
 
 	go client.readPump()
 	go client.writePump()

@@ -15,6 +15,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 func main() {
 	server.InitRedis()
+	server.InitGrid()
 
 	mux := http.NewServeMux()
 

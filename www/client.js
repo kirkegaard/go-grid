@@ -1,22 +1,40 @@
-const API = "";
-const ws = new WebSocket(`${API}/ws`);
+const getSocket = () => {
+  const API = "ws://localhost:6060";
+  const socket = new WebSocket(`${API}/ws`);
 
-ws.onopen = () => {
-  console.log("Connected to the server");
+  socket.onopen = () => {
+    console.log("Connection established");
+  };
+
+  socket.onmessage = ({ data }) => {
+    if (data.indexOf("set:") === 0) {
+      const [_, cell, checked] = data.split(":");
+      const input = document.querySelector(`input[name="${cell}"]`);
+      input.checked = checked === "1" ? true : false;
+    } else {
+      const binaryString = atob(data);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      buildGrid(bytesToBitArray(bytes));
+    }
+  };
+
+  socket.onclose = () => {
+    console.log("Connection closed");
+    setTimeout(() => {
+      getSocket();
+    }, 1000);
+  };
+
+  return socket;
 };
 
-ws.onmessage = (event) => {
-  if (event.data.indexOf("set:") === 0) {
-    const [_, cell, checked] = event.data.split(":");
-    const input = document.querySelector(`input[name="${cell}"]`);
-    input.checked = checked === "1" ? true : false;
-  } else {
-    // Setup grid
-    const bits = reverseXOR(hexToBytes(event.data));
-    setupGrid(bits);
-  }
-};
-
+const ws = getSocket();
 const grid = document.querySelector("#grid");
 
 document.querySelector("#toggle").onclick = (event) => {
@@ -24,14 +42,13 @@ document.querySelector("#toggle").onclick = (event) => {
   grid.classList.toggle("fixed");
 };
 
-function setupGrid(bits) {
+function buildGrid(bits) {
   const fragment = document.createDocumentFragment();
 
   for (let i = 0; i < bits.length; i++) {
     const input = document.createElement("input");
     input.type = "checkbox";
     input.name = i;
-    input.value = 1;
     input.checked = bits[i] === 1 ? true : false;
     input.onclick = (event) => {
       event.preventDefault();
@@ -46,30 +63,12 @@ function setupGrid(bits) {
   grid.appendChild(fragment);
 }
 
-// Function to convert hex string to byte array
-function hexToBytes(hex) {
-  const bytes = [];
-  for (let i = 0; i < hex.length; i += 2) {
-    bytes.push(parseInt(hex.substr(i, 2), 16));
-  }
-  return bytes;
-}
-
-// Reverse the XOR operation
-function reverseXOR(bytes) {
-  const gridSize = bytes.length * 8;
-  console.log(gridSize);
-  const bits = [];
-
-  for (let i = 0; i < gridSize; i++) {
-    // Determine which byte the bit is in and which bit position within that byte
-    const byteIndex = Math.floor(i / 8);
-    const bitPosition = i % 8;
-
-    // XOR operation to reverse the bit
-    const bit = (bytes[byteIndex] >> bitPosition) & 1;
-    bits.push(bit);
-  }
-
-  return bits;
+function bytesToBitArray(bytes) {
+  let bitArray = [];
+  bytes.forEach((byte) => {
+    for (let i = 0; i < 8; i++) {
+      bitArray.push((byte >> (7 - i)) & 1);
+    }
+  });
+  return bitArray;
 }
