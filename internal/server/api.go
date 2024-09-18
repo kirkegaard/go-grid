@@ -2,10 +2,43 @@ package server
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 )
+
+func ApiGetConnectionsCountHandler(w http.ResponseWriter, r *http.Request) {
+	clients := hub.GetConnectedClients()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(len(clients))
+}
+
+func ApiGetClientsHandler(w http.ResponseWriter, r *http.Request) {
+	clients := hub.GetConnectedClients()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(clients)
+}
+
+func ApiKickClientHandler(w http.ResponseWriter, r *http.Request) {
+	clientId := r.URL.Query().Get("clientId")
+	if clientId == "" {
+		http.Error(w, "Missing clientId", http.StatusBadRequest)
+		return
+	}
+
+	duration, err := strconv.Atoi(r.URL.Query().Get("duration"))
+	if err != nil || duration == 0 {
+		duration = 0
+	}
+
+	kicked := hub.KickClient(clientId, duration)
+	if !kicked {
+		http.Error(w, "Client not found", http.StatusBadRequest)
+		return
+	}
+	http.Error(w, "Client kicked", http.StatusOK)
+}
 
 // Fetch the grid state
 func ApiGetHandler(w http.ResponseWriter, r *http.Request) {

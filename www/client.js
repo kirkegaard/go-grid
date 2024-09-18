@@ -1,6 +1,12 @@
+let API = "";
+let PROTOCOL = "";
+if (window.location.hostname === "localhost") {
+  API = "localhost:6060";
+  PROTOCOL = "http";
+}
+
 const getSocket = () => {
-  const API = ""; // "ws://localhost:6060";
-  const socket = new WebSocket(`${API}/ws`);
+  const socket = new WebSocket(`ws://${API}/ws`);
 
   socket.onopen = () => {
     console.log("Connection established");
@@ -41,6 +47,16 @@ document.querySelector("#toggle").onclick = (event) => {
   event.preventDefault();
   grid.classList.toggle("fixed");
 };
+
+function getCount() {
+  fetch(`${PROTOCOL}://${API}/ws/count`)
+    .then((response) => response.text())
+    .then((data) => {
+      document.querySelector("#count").textContent = data;
+    });
+}
+getCount();
+setInterval(getCount, 10000);
 
 function buildGrid(bits) {
   const fragment = document.createDocumentFragment();

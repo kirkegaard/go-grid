@@ -23,7 +23,12 @@ func main() {
 	mux.HandleFunc("GET /ping", server.PingHandler)
 	mux.HandleFunc("GET /get", server.ApiGetHandler)
 	mux.HandleFunc("POST /set", server.ApiSetHandler)
+
 	mux.HandleFunc("/ws", server.WebSocketHandler)
+
+	mux.HandleFunc("GET /ws/count", server.ApiGetConnectionsCountHandler)
+	mux.HandleFunc("GET /ws/clients", server.ApiGetClientsHandler)
+	mux.HandleFunc("POST /ws/kick", server.ApiKickClientHandler)
 
 	hub := server.GetHub()
 	go hub.RunHub()
