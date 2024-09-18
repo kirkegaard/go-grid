@@ -1,12 +1,8 @@
-let API = "";
-let PROTOCOL = "";
-if (window.location.hostname === "localhost") {
-  API = "localhost:6060";
-  PROTOCOL = "http";
-}
+const WEBSOCKET = "/ws";
+const API = "";
 
 const getSocket = () => {
-  const socket = new WebSocket(`ws://${API}/ws`);
+  const socket = new WebSocket(`${WEBSOCKET}`);
 
   socket.onopen = () => {
     console.log("Connection established");
@@ -49,7 +45,7 @@ document.querySelector("#toggle").onclick = (event) => {
 };
 
 function getCount() {
-  fetch(`${PROTOCOL}://${API}/ws/count`)
+  fetch(`${API}/ws/count`)
     .then((response) => response.text())
     .then((data) => {
       document.querySelector("#count").textContent = data;

@@ -1,7 +1,10 @@
 services:
 
   api: 
-    image: ghcr.io/kirkegaard/go-grid:latest
+    # image: ghcr.io/kirkegaard/go-grid:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: api
     restart: always
     environment:
