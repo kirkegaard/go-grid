@@ -173,8 +173,8 @@ function bytesToBitArray(bytes) {
 
 // Get cursor position relative to body
 function getCursorPosition(event) {
-  const x = event.clientX;
-  const y = event.clientY;
+  const x = event.clientX + window.scrollX;
+  const y = event.clientY + window.scrollY;
   return { x, y };
 }
 
