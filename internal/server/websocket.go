@@ -41,6 +41,11 @@ type clientInfo struct {
 	ActionCount int    `json:"actionCount"`
 }
 
+type Message struct {
+	Type    string
+	Payload string
+}
+
 // Hub maintains the set of active clients and broadcasts events
 type Hub struct {
 	Clients    map[*Client]bool
@@ -66,7 +71,6 @@ func GetHub() *Hub {
 
 // webSocketHandler handles WebSocket requests
 func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
-
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		http.Error(w, "Could not open WebSocket connection", http.StatusInternalServerError)
@@ -92,6 +96,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	based := base64.StdEncoding.EncodeToString(bits)
 	client.Send <- []byte(based)
+	client.Send <- []byte(fmt.Sprintf("c:%s", clientId))
 
 	go client.readPump()
 	go client.writePump()
@@ -155,6 +160,54 @@ func (h *Hub) IsBlocked(ip string) bool {
 	return true
 }
 
+// Message Handlers
+type MessageHandler func(client *Client, payload string)
+
+var messageHandlers = map[string]MessageHandler{
+	"p": handlePosition,
+	"s": throttle(handleToggleCell, THROTTLE*time.Millisecond),
+}
+
+func handlePosition(client *Client, payload string) {
+	pos := strings.Split(payload, ":")
+	id := pos[0]
+	x, _ := strconv.Atoi(pos[1])
+	y, _ := strconv.Atoi(pos[2])
+	hub.Broadcast <- []byte(fmt.Sprintf("p:%s:%d:%d", id, x, y))
+}
+
+func handleToggleCell(client *Client, payload string) {
+	cell, err := strconv.Atoi(payload)
+	if err != nil || cell < 0 || cell >= gridSize {
+		log.Printf("Invalid cell: %d", cell)
+		return
+	}
+
+	newBit, err := toggleGridCell(cell)
+	if err != nil {
+		log.Printf("Failed to toggle cell: %d", cell)
+		return
+	}
+
+	response := fmt.Sprintf("s:%d:%d", cell, newBit)
+	hub.Broadcast <- []byte(response)
+}
+
+// Throttle utility
+func throttle(handler MessageHandler, duration time.Duration) MessageHandler {
+	return func(client *Client, payload string) {
+		client.LastMessageMux.Lock()
+		if time.Since(client.LastMessage) < duration {
+			client.LastMessageMux.Unlock()
+			return
+		}
+		client.LastMessage = time.Now()
+		client.LastMessageMux.Unlock()
+
+		handler(client, payload)
+	}
+}
+
 // readPump pumps messages from the WebSocket connection to the hub
 func (c *Client) readPump() {
 	defer func() {
@@ -162,41 +215,27 @@ func (c *Client) readPump() {
 		c.Conn.Close()
 	}()
 
-	ticker := time.NewTicker(THROTTLE * time.Millisecond)
-	defer ticker.Stop()
-
 	for {
 		_, message, err := c.Conn.ReadMessage()
 		if err != nil {
 			break
 		}
 
-		c.LastMessageMux.Lock()
-		if time.Since(c.LastMessage) < THROTTLE*time.Millisecond {
-			c.LastMessageMux.Unlock()
-			continue
+		parts := strings.SplitN(string(message), ":", 2)
+		if len(parts) != 2 {
+			fmt.Println("Invalid message format")
+			return
 		}
-		c.LastMessage = time.Now()
-		c.ActionCount++
-		c.LastMessageMux.Unlock()
 
-		msg := string(message)
-		if strings.HasPrefix(msg, "set:") {
-			cellStr := strings.Split(msg, "set:")
-			cell, err := strconv.Atoi(cellStr[1])
-			if err != nil || cell < 0 || cell >= gridSize {
-				log.Printf("Invalid cell: %d", cell)
-				continue
-			}
+		msg := Message{
+			Type:    parts[0],
+			Payload: parts[1],
+		}
 
-			newBit, err := toggleGridCell(cell)
-			if err != nil {
-				log.Printf("Failed to toggle cell: %d", cell)
-				continue
-			}
-
-			response := fmt.Sprintf("set:%d:%d", cell, newBit)
-			hub.Broadcast <- []byte(response)
+		if handler, ok := messageHandlers[msg.Type]; ok {
+			handler(c, msg.Payload)
+		} else {
+			log.Printf("Unknown message type: %s", msg.Type)
 		}
 	}
 }
@@ -209,7 +248,6 @@ func (c *Client) writePump() {
 		if err != nil {
 			break
 		}
-
 	}
 }
 
@@ -229,13 +267,23 @@ func (h *Hub) RunHub() {
 			h.mu.Lock()
 			h.Clients[client] = true
 			h.mu.Unlock()
+
+			go func() {
+				h.Broadcast <- []byte(fmt.Sprintf("r:%s", client.Id))
+			}()
+
 		case client := <-h.Unregister:
 			h.mu.Lock()
 			if _, ok := h.Clients[client]; ok {
 				delete(h.Clients, client)
 				close(client.Send)
+
+				go func() {
+					h.Broadcast <- []byte(fmt.Sprintf("d:%s", client.Id))
+				}()
 			}
 			h.mu.Unlock()
+
 		case message := <-h.Broadcast:
 			h.mu.Lock()
 			for client := range h.Clients {
