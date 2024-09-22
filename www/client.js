@@ -1,4 +1,4 @@
-const WEBSOCKET = "ws://localhost:6060/ws";
+const WEBSOCKET = "/ws";
 const API = "";
 
 let clientId = "";
