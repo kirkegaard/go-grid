@@ -8,6 +8,10 @@ import (
 	"strconv"
 )
 
+func ApiFallbackHandler(w http.ResponseWriter, r *http.Request) {
+	http.FileServer(http.Dir("./www")).ServeHTTP(w, r)
+}
+
 func ApiGetConnectionsCountHandler(w http.ResponseWriter, r *http.Request) {
 	clients := hub.GetConnectedClients()
 	w.Header().Set("Content-Type", "application/json")

@@ -1,4 +1,4 @@
-const WEBSOCKET = "/ws";
+const WEBSOCKET = "/api/ws";
 const API = "";
 
 let clientId = "";

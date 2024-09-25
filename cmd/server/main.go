@@ -20,15 +20,17 @@ func main() {
 	mux := http.NewServeMux()
 
 	// Endpoint handlers
-	mux.HandleFunc("GET /ping", server.PingHandler)
-	mux.HandleFunc("GET /get", server.ApiGetHandler)
-	mux.HandleFunc("POST /set", server.ApiSetHandler)
+	mux.HandleFunc("GET /api/ping", server.PingHandler)
+	mux.HandleFunc("GET /api/get", server.ApiGetHandler)
+	mux.HandleFunc("POST /api/set", server.ApiSetHandler)
+	mux.HandleFunc("GET /api/count", server.ApiGetConnectionsCountHandler)
+	mux.HandleFunc("GET /api/clients", server.ApiGetClientsHandler)
+	mux.HandleFunc("POST /api/kick", server.ApiKickClientHandler)
 
-	mux.HandleFunc("/ws", server.WebSocketHandler)
+	mux.HandleFunc("/api/ws", server.WebSocketHandler)
 
-	mux.HandleFunc("GET /ws/count", server.ApiGetConnectionsCountHandler)
-	mux.HandleFunc("GET /ws/clients", server.ApiGetClientsHandler)
-	mux.HandleFunc("POST /ws/kick", server.ApiKickClientHandler)
+	// Serve files from the static directory ./www
+	mux.HandleFunc("/", server.ApiFallbackHandler)
 
 	hub := server.GetHub()
 	go hub.RunHub()
